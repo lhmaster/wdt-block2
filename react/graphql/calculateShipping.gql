@@ -1,0 +1,10 @@
+query getSLA($items: [ShippingItem], $code: String, $country: String) {
+  shipping(items: $items, postalCode: $code, country: $country) {
+    logisticsInfo {
+      slas {
+        shippingEstimate
+        id
+      }
+    }
+  }
+}

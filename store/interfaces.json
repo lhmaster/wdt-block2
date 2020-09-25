@@ -1,5 +1,8 @@
 {
-  "countdown": {
-    "component": "Countdown"
+  "teste": {
+    "component": "Teste"
+  },
+  "inputcep": {
+    "component": "InputCEP"
   }
 }

@@ -1,41 +1,58 @@
-import React, {Fragment, useState, useCallback, useMemo, useEffect} from "react"
+import React, {useState, useEffect} from "react"
 import { useLazyQuery } from "react-apollo"
 import CalculateShipping from "./graphql/calculateShipping.gql"
 import { useProductSummary } from 'vtex.product-summary-context/ProductSummaryContext'
 
-function FunctionTeste() {
-    const [cookie, setCookie] = useState([])
+function ProductShippingEstimate() {
+    const [cookie, setCookie] = useState('')
+    const [shippingEstimate, setShippingEstimate] = useState('')
     const [fetchshipping, {data, loading}] = useLazyQuery(CalculateShipping)
-    console.log("data -> ", data, " -- ", loading)
     const productSummary = useProductSummary()
-    console.log({productSummary})
 
     useEffect(() => {
-        console.log("useEffect")
-        setCookie(document.cookie.split(";").filter(function(cookie) {
-            return cookie.indexOf("cep") != -1
-        }))
+        let valueCookie
+        document.cookie.split(';').filter(item => {
+            if(item.search('cep') > -1) valueCookie = item.split('=')[1]
+        })
+        setCookie(valueCookie)
+    },[])
 
-        console.log(cookie.length)
+    useEffect(() => {
+        if(productSummary){
+            fetchshipping({
+                variables: {
+                    "items": [{"id": "1", "seller": "1", "quantity": "1"}],
+                    "code": `${cookie || '12947000'}`,
+                    "country": "BRA"
+            }})
+        }
+    },[productSummary])
+    
+    useEffect(()=> {
+        if(data && data.shipping){
+            let value = data.shipping.logisticsInfo[0].slas[0].shippingEstimate
+            value = value.replace('bd', '')
+            setShippingEstimate(value)
+        }
+    },[data])
 
-        if (!productSummary) return
-        if (cookie.length == 0) return
-        fetchshipping({variables: {
-            "items": [{"id": "1", "seller": "1", "quantity": "1"}],
-            "code": "12947000",
-            "country": "BRA"
-        }})
-    }, [productSummary])
-
-    console.log("LOADING -> ", loading)
-    if (cookie.length > 0 && !loading) {
-        return (
-            // <span>cfjweo</span>
-            <span>{data.shipping.logisticsInfo[0].slas[0].shippingEstimate}</span>
-        )
-    } else  {
-        return <span>teste</span>
-    }
+    return(
+        <>
+            {
+                cookie.length > 0 && !loading ?
+                <span style={{
+                    color: "#fff",
+                    background: "#000",
+                    display: "inline-block",
+                    padding: "8px 12px",
+                    textAlign: 'left',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                }}>Entrega em até {shippingEstimate} dias úteis para o centro de São Paulo</span>
+                : <></>
+            }
+        </>
+    )
 }
 
-export default FunctionTeste
+export default ProductShippingEstimate
